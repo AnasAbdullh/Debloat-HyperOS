@@ -1,9 +1,20 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.serialization")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
+}
+
+// قراءة بيانات التوقيع من keystore.properties الموجود في جذر المشروع
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        load(FileInputStream(keystorePropertiesFile))
+    }
 }
 
 android {
@@ -22,10 +33,13 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("""C:\Users\anasa\Desktop\debloat-release.jks""")
-            storePassword = "Anas55."
-            keyAlias = "debloat_key"
-            keyPassword = "Anas55."
+            if (keystorePropertiesFile.exists()) {
+                val relativeStorePath = keystoreProperties.getProperty("storeFile")
+                storeFile = rootProject.file(relativeStorePath)
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
         }
     }
 

@@ -7,3 +7,8 @@
 /captures
 .externalNativeBuild
 .cxx
+# Keystore & Signing Secrets
+keystore.properties
+*.jks
+*.keystore
+/app/release/
