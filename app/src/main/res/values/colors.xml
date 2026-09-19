@@ -1,0 +1,5 @@
+<resources>
+    <color name="background_dark">#121212</color>
+    <color name="surface_card">#1E1E24</color>
+    <color name="accent_orange">#FF7A00</color>
+</resources>

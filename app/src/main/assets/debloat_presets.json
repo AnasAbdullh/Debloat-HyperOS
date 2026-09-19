@@ -1,0 +1,79 @@
+{
+  "categories": [
+    {
+      "category": "Mi Share & Connectivity",
+      "apps": [
+        { "name": "Compass", "packageName": "com.miui.compass" },
+        { "name": "FM Radio", "packageName": "com.android.fmradio" },
+        { "name": "Trips", "packageName": "com.miui.smarttravel" },
+        { "name": "Mi Share", "packageName": "com.miui.mishare.connectivity" },
+        { "name": "Mi Credit (GP)", "packageName": "com.micredit.in.gp" },
+        { "name": "Mi File Explorer", "packageName": "com.mi.android.globalFileexplorer" }
+      ]
+    },
+    {
+      "category": "Quick Apps & Store",
+      "apps": [
+        { "name": "Quick Apps Addon", "packageName": "com.miui.hybrid.accessory" },
+        { "name": "Video Player", "packageName": "com.miui.videoplayer" },
+        { "name": "GetApps", "packageName": "com.xiaomi.mipicks" },
+        { "name": "Translation (Kingsoft)", "packageName": "com.miui.translation.kingsoft" },
+        { "name": "Translation (Youdao)", "packageName": "com.miui.translation.youdao" },
+        { "name": "Translation (Cloud)", "packageName": "com.miui.translation.xmcloud" },
+        { "name": "Translation Service", "packageName": "com.miui.translationservice" },
+        { "name": "Mi Doc Viewer", "packageName": "cn.wps.xiaomi.abroad.lite" },
+        { "name": "Recycle Service", "packageName": "com.xiaomi.mirecycle" },
+        { "name": "App Installer (Ads)", "packageName": "com.miui.global.packageinstaller" },
+        { "name": "App Vault", "packageName": "com.mi.android.globalminusscreen" }
+      ]
+    },
+    {
+      "category": "Facebook & MIUI Daemons",
+      "apps": [
+        { "name": "Cleaner", "packageName": "com.miui.cleanmaster" },
+        { "name": "MIUI Daemon (Tracking)", "packageName": "com.miui.daemon" },
+        { "name": "MSA (Ad Service)", "packageName": "com.miui.msa.global" },
+        { "name": "Xiaomi WebView", "packageName": "com.mi.webkit.core" },
+        { "name": "Joyose (Tracking)", "packageName": "com.xiaomi.joyose" },
+        { "name": "Facebook Services", "packageName": "com.facebook.services" },
+        { "name": "Facebook App Manager", "packageName": "com.facebook.appmanager" },
+        { "name": "Facebook System", "packageName": "com.facebook.system" },
+        { "name": "Analytic (Tracking)", "packageName": "com.miui.analytics" },
+        { "name": "Wallpaper Carousel", "packageName": "com.miui.android.fashiongallery" },
+        { "name": "ShareMe / Mi Drop", "packageName": "com.xiaomi.midrop" }
+      ]
+    },
+    {
+      "category": "MIUI / HyperOS Services",
+      "apps": [
+        { "name": "Mi Credit", "packageName": "com.micredit.in" },
+        { "name": "Mi Health", "packageName": "com.mi.health" },
+        { "name": "Downloads (Ads)", "packageName": "com.android.providers.downloads.ui" },
+        { "name": "Mi AI", "packageName": "com.miui.voiceassist" },
+        { "name": "Mi Live Assistant", "packageName": "com.mi.liveassistant" },
+        { "name": "User Guide", "packageName": "com.miui.userguide" },
+        { "name": "XiaoAi Speech", "packageName": "com.xiaomi.mibrain.speech" },
+        { "name": "Mi Home", "packageName": "com.xiaomi.smarthome" },
+        { "name": "Sogou Keyboard", "packageName": "com.sohu.inputmethod.sogou.xiaomi" },
+        { "name": "Notes", "packageName": "com.miui.notes" },
+        { "name": "iFlytek IME", "packageName": "com.iflytek.inputmethod.miui" }
+      ]
+    },
+    {
+      "category": "Tracking, Browser & Media",
+      "apps": [
+        { "name": "Xiaomi Browser", "packageName": "com.android.browser" },
+        { "name": "Bug Report (Tracking)", "packageName": "com.miui.bugreport" },
+        { "name": "GLGM (Tracking)", "packageName": "com.xiaomi.glgm" },
+        { "name": "Yellow Pages (Tracking)", "packageName": "com.miui.yellowpage" },
+        { "name": "Weather", "packageName": "com.miui.weather2" },
+        { "name": "Mi Service (Tracking)", "packageName": "com.miui.miservice" },
+        { "name": "Music Player", "packageName": "com.miui.player" },
+        { "name": "Mi Pay (ID)", "packageName": "com.mipay.wallet.id" },
+        { "name": "Mi Pay (IN)", "packageName": "com.mipay.wallet.in" },
+        { "name": "Mi Coin", "packageName": "com.xiaomi.payment" },
+        { "name": "Quick Apps", "packageName": "com.miui.hybrid" }
+      ]
+    }
+  ]
+}
