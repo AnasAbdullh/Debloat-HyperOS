@@ -126,6 +126,9 @@ class DebloatViewModel(
     init {
         viewModelScope.launch {
             repository.seedIfNeeded()
+            if (ShizukuManager.hasPermission() && !ShizukuManager.testShellExecution()) {
+                _lastResultMessage.value = "Shizuku shell execution isn't working on this build — try updating Shizuku."
+            }
             refreshFromDevice()
         }
     }
@@ -160,6 +163,7 @@ class DebloatViewModel(
 
     fun setFilterTab(tab: FilterTab) {
         _filterTab.value = tab
+        viewModelScope.launch { repository.clearSelection() }
     }
 
     fun toggleAppSelection(packageName: String, selected: Boolean) {
