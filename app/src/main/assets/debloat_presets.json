@@ -3,7 +3,7 @@
     {
       "category": "Mi Share & Connectivity",
       "apps": [
-        { "name": "Compass (مُعدل أونلاين)", "packageName": "com.miui.compass" },
+        { "name": "Compass", "packageName": "com.miui.compass" },
         { "name": "FM Radio", "packageName": "com.android.fmradio" },
         { "name": "Trips", "packageName": "com.miui.smarttravel" },
         { "name": "Mi Share", "packageName": "com.miui.mishare.connectivity" },
