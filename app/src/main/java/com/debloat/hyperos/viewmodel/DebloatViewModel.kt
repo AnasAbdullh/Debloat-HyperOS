@@ -162,6 +162,7 @@ class DebloatViewModel(
     }
 
     fun setFilterTab(tab: FilterTab) {
+        if (_filterTab.value == tab) return // لا تمسح التحديد إذا كان نفس التبويب
         _filterTab.value = tab
         viewModelScope.launch { repository.clearSelection() }
     }

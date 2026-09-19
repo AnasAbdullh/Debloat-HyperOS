@@ -20,8 +20,18 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("""C:\Users\anasa\Desktop\debloat-release.jks""")
+            storePassword = "Anas55."
+            keyAlias = "debloat_key"
+            keyPassword = "Anas55."
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
