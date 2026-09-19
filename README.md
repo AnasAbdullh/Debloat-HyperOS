@@ -1,7 +1,7 @@
 # ⚡ Debloat HyperOS
 
 <p align="center">
-  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" width="90" alt="Debloat HyperOS Logo" />
+  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp" width="90" alt="Debloat HyperOS Logo" />
 </p>
 
 <p align="center">
