@@ -23,7 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.debloat.hyperos.R
 import com.debloat.hyperos.ui.theme.AccentOrange
+import com.debloat.hyperos.viewmodel.BatchMode
 import com.debloat.hyperos.viewmodel.FilterTab
+import com.debloat.hyperos.viewmodel.resolveBatchMode
 
 @Composable
 fun BottomActionBar(
@@ -38,21 +40,20 @@ fun BottomActionBar(
     onActionClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // تحديد ما إذا كان الإجراء هو استرجاع
-    val isRestoreAction = filterTab == FilterTab.REMOVED ||
-            (filterTab == FilterTab.ALL && removedSelectedCount > 0 && installedSelectedCount == 0)
+    val isMixed = installedSelectedCount > 0 && removedSelectedCount > 0
+    val mode = resolveBatchMode(filterTab, installedSelectedCount, removedSelectedCount)
 
-    val baseAction = if (isRestoreAction) {
-        stringResource(R.string.action_restore)
-    } else {
-        stringResource(R.string.action_uninstall)
+    val buttonText = when {
+        isMixed -> "Mixed selection (Choose one type)"
+        mode == BatchMode.RESTORE && selectedCount > 0 -> "${stringResource(R.string.action_restore)} ($selectedCount)"
+        mode == BatchMode.UNINSTALL && selectedCount > 0 -> "${stringResource(R.string.action_uninstall)} ($selectedCount)"
+        filterTab == FilterTab.REMOVED -> stringResource(R.string.action_restore)
+        else -> stringResource(R.string.action_uninstall)
     }
 
-    val buttonText = if (selectedCount > 0) "$baseAction ($selectedCount)" else baseAction
-    val enabled = selectedCount > 0 && !batchInProgress
-
-    // تغيير لون الزر: أخضر هادئ للاسترجاع وبرتقالي للحذف
-    val actionColor = if (isRestoreAction) Color(0xFF2E7D32) else AccentOrange
+    // يتم تعطيل الزر إذا كان التحديد فارغاً أو العملية جارية أو التحديد مختلطاً
+    val enabled = selectedCount > 0 && !batchInProgress && !isMixed
+    val actionColor = if (mode == BatchMode.RESTORE) Color(0xFF2E7D32) else AccentOrange
 
     Surface(
         modifier = modifier.fillMaxWidth(),

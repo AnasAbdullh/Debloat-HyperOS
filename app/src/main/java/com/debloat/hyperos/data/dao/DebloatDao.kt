@@ -63,4 +63,9 @@ interface DebloatDao {
 
     @Update
     suspend fun update(app: DebloatAppEntity)
+
+    @Query(
+        "UPDATE debloat_apps SET isInstalled = :isInstalled, isRemovedByApp = :isRemovedByApp WHERE packageName = :packageName"
+    )
+    suspend fun syncInstallState(packageName: String, isInstalled: Boolean, isRemovedByApp: Boolean)
 }

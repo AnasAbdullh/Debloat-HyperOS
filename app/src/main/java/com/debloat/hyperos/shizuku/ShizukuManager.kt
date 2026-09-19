@@ -1,14 +1,14 @@
 package com.debloat.hyperos.shizuku
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import rikka.shizuku.Shizuku
 import java.io.BufferedReader
-import java.io.InputStreamReader
-import kotlinx.coroutines.async
 
 /**
  * Central point for all Shizuku interaction: binder lifecycle, permission
@@ -18,6 +18,7 @@ import kotlinx.coroutines.async
 object ShizukuManager {
 
     private const val REQUEST_CODE = 5162
+    private const val EXEC_TIMEOUT_MS = 15_000L
 
     sealed class ConnectionState {
         data object Disconnected : ConnectionState()
@@ -90,10 +91,6 @@ object ShizukuManager {
             _connectionState.value = ConnectionState.PermissionGranted
             return
         }
-        if (Shizuku.shouldShowRequestPermissionRationale()) {
-            // Caller (UI layer) is responsible for surfacing an explanation
-            // before calling this again — we still issue the request.
-        }
         Shizuku.requestPermission(REQUEST_CODE)
     }
 
@@ -101,7 +98,7 @@ object ShizukuManager {
         _connectionState.value = when {
             !isAvailable() -> ConnectionState.Disconnected
             hasPermission() -> ConnectionState.PermissionGranted
-            else -> ConnectionState.Connected // binder alive, permission not yet granted
+            else -> ConnectionState.Connected
         }
     }
 
@@ -114,9 +111,7 @@ object ShizukuManager {
     }
 
     /**
-     * Executes a shell command through Shizuku.newProcess, running under the
-     * ADB shell uid (2000) — sufficient for `pm uninstall --user 0` /
-     * `cmd package install-existing` without root.
+     * Executes a shell command through Shizuku.newProcess with a 15-second timeout.
      */
     suspend fun exec(command: String): ShellResult = withContext(Dispatchers.IO) {
         if (!hasPermission()) {
@@ -139,9 +134,16 @@ object ShizukuManager {
                 process.errorStream.bufferedReader().use(BufferedReader::readText)
             }
 
+            // انتظار انتهاء العملية بحد أقصى 15 ثانية لمنع تعليق التطبيق
+            val exitCode = withTimeoutOrNull(EXEC_TIMEOUT_MS) {
+                process.waitFor()
+            } ?: run {
+                process.destroyForcibly()
+                return@withContext ShellResult(-1, "", "Command timed out after 15s")
+            }
+
             val stdout = stdoutDeferred.await()
             val stderr = stderrDeferred.await()
-            val exitCode = process.waitFor()
 
             ShellResult(exitCode, stdout.trim(), stderr.trim())
         } catch (t: Throwable) {
@@ -160,28 +162,17 @@ object ShizukuManager {
             .toSet()
     }
 
-    /** `pm list packages --user 0 <package>` → true if `package:<name>` is present. */
-    suspend fun getInstalledPackages(): Set<String> {
-        val result = exec("pm list packages --user 0")
-        if (!result.isSuccess) return emptySet()
-
-        return result.stdout.lineSequence()
-            .map { it.trim() }
-            .filter { it.startsWith("package:") }
-            .map { it.removePrefix("package:") }
-            .toSet()
+    /** فحص سريع لسلامة تنفيذ أوامر Shizuku بالـ Reflection */
+    suspend fun testShellExecution(): Boolean {
+        val res = exec("echo ok")
+        return res.isSuccess && res.stdout == "ok"
     }
 
-    suspend fun isPackageInstalled(packageName: String): Boolean {
-        val result = exec("pm path $packageName")
-        return result.isSuccess && result.stdout.contains("package:")
-    }
-
-    /** `pm uninstall --user 0 <package>` — user-scoped removal, restorable without a flash. */
+    /** `pm uninstall --user 0 <package>` — user-scoped removal */
     suspend fun uninstallPackage(packageName: String): ShellResult =
         exec("pm uninstall --user 0 $packageName")
 
-    /** `cmd package install-existing <package>` — restores a previously uninstalled-for-user app. */
+    /** `cmd package install-existing <package>` — restores uninstalled-for-user app */
     suspend fun restorePackage(packageName: String): ShellResult =
         exec("cmd package install-existing $packageName")
 }

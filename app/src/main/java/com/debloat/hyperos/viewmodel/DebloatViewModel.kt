@@ -15,6 +15,25 @@ import kotlinx.coroutines.launch
 
 enum class FilterTab { INSTALLED, REMOVED, ALL }
 
+enum class BatchMode { UNINSTALL, RESTORE }
+
+/**
+ * تحديد نوع العملية بذكاء لمنع التعارض:
+ * - إذا وجد خليط بين مثبت ومحذوف -> يعيد null (غير مسموح)
+ * - إذا كان التبويب REMOVED أو العناصر المحددة كلها محذوفة -> RESTORE
+ * - إذا كانت العناصر المحددة مثبتة -> UNINSTALL
+ */
+fun resolveBatchMode(
+    filterTab: FilterTab,
+    installedSelectedCount: Int,
+    removedSelectedCount: Int
+): BatchMode? = when {
+    installedSelectedCount > 0 && removedSelectedCount > 0 -> null
+    filterTab == FilterTab.REMOVED || (removedSelectedCount > 0 && installedSelectedCount == 0) -> BatchMode.RESTORE
+    installedSelectedCount > 0 -> BatchMode.UNINSTALL
+    else -> null
+}
+
 data class CategoryGroup(
     val category: String,
     val apps: List<DebloatAppEntity>,
@@ -131,13 +150,6 @@ class DebloatViewModel(
         }
     }
 
-    fun selectAllInstalled(select: Boolean) {
-        val currentTabApps = uiState.value.groups.flatMap { it.apps }
-        currentTabApps.forEach { app ->
-            toggleAppSelection(app.packageName, select)
-        }
-    }
-
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
     }
@@ -168,59 +180,67 @@ class DebloatViewModel(
         }
     }
 
-    /** Runs uninstall on selected installed apps, or restore on selected removed apps */
+    /** تشغيل الحذف أو الاسترجاع مع حماية شاملة من الأخطاء والتعليق */
     fun runBatchAction() {
+        // حماية من النقر المكرر أثناء سير العملية
+        if (_batchState.value.inProgress) return
+
         if (!uiState.value.shizukuPermissionGranted || !uiState.value.shizukuConnected) {
             _lastResultMessage.value = "Action failed: Shizuku permission required. Tap 'Grant access' above."
             return
         }
 
         val state = uiState.value
-        // تحديد نوع العملية بذكاء:
-        // 1. إذا كان في تبويب REMOVED -> دائماً Restore
-        // 2. إذا كان في تبويب ALL وكل العناصر المحددة محذوفة -> Restore
-        // 3. عدا ذلك -> Uninstall
-        val isRestoring = state.filterTab == FilterTab.REMOVED ||
-                (state.filterTab == FilterTab.ALL && state.removedSelectedCount > 0 && state.installedSelectedCount == 0)
+        val mode = resolveBatchMode(state.filterTab, state.installedSelectedCount, state.removedSelectedCount)
+
+        if (mode == null) {
+            _lastResultMessage.value = "Can't mix installed and removed apps. Select only one type at a time."
+            return
+        }
 
         viewModelScope.launch {
             _batchState.value = BatchUiState(inProgress = true, total = 0, completed = 0)
-            val onProgress: suspend (DebloatRepository.BatchOpResult.Progress) -> Unit = { progress ->
-                _batchState.value = BatchUiState(
-                    inProgress = true,
-                    label = progress.currentLabel,
-                    completed = progress.completed,
-                    total = progress.total
-                )
-            }
+            try {
+                val onProgress: suspend (DebloatRepository.BatchOpResult.Progress) -> Unit = { progress ->
+                    _batchState.value = BatchUiState(
+                        inProgress = true,
+                        label = progress.currentLabel,
+                        completed = progress.completed,
+                        total = progress.total
+                    )
+                }
 
-            val finished = if (isRestoring) {
-                repository.restoreSelected(onProgress)
-            } else {
-                repository.uninstallSelected(onProgress)
-            }
+                val finished = if (mode == BatchMode.RESTORE) {
+                    repository.restoreSelected(onProgress)
+                } else {
+                    repository.uninstallSelected(onProgress)
+                }
 
-            _batchState.value = BatchUiState()
+                val succeeded = finished.successCount
+                val failed = finished.failureCount
 
-            val succeeded = finished.successCount
-            val failed = finished.failureCount
-
-            _lastResultMessage.value = when {
-                failed == 0 -> "$succeeded succeeded"
-                succeeded == 0 -> {
-                    if (isRestoring) {
-                        "Restore failed: APK not found in system ROM (user app)"
-                    } else {
-                        "Uninstall failed: Package is system-protected"
+                _lastResultMessage.value = when {
+                    failed == 0 -> "$succeeded succeeded"
+                    succeeded == 0 -> {
+                        if (mode == BatchMode.RESTORE) {
+                            "Restore failed: APK not found in system ROM (user app)"
+                        } else {
+                            "Uninstall failed: Package is system-protected"
+                        }
+                    }
+                    else -> {
+                        if (mode == BatchMode.RESTORE) {
+                            "$succeeded restored, $failed failed"
+                        } else {
+                            "$succeeded uninstalled, $failed failed"
+                        }
                     }
                 }
-                else -> {
-                    if (isRestoring) {
-                        "$succeeded restored, $failed failed (some APKs missing from ROM)"
-                    } else {
-                        "$succeeded uninstalled, $failed failed"
-                    }
-                }
+            } catch (e: Exception) {
+                _lastResultMessage.value = "Operation failed unexpectedly: ${e.message}"
+            } finally {
+                // يضمن إعادة تعيين الحالة حتى لا يعلق الزر ومؤشر التحميل مطلقاً
+                _batchState.value = BatchUiState()
             }
         }
     }

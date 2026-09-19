@@ -52,7 +52,11 @@ class DebloatRepository(
         for (app in current) {
             val installed = installedPackages.contains(app.packageName)
             val removedByApp = app.isRemovedByApp && !installed
-            dao.updateInstallState(app.packageName, installed, removedByApp)
+
+            // نحدث فقط في حال تغيرت الحالة فعلياً لتفادي تكرار إطلاق الـ Flow والحفاظ على تحديدات المستخدم
+            if (installed != app.isInstalled || removedByApp != app.isRemovedByApp) {
+                dao.syncInstallState(app.packageName, installed, removedByApp)
+            }
         }
     }
 
@@ -157,19 +161,17 @@ class DebloatRepository(
         }
 
     /**
-     * تجلب أحدث قائمة حزم من GitHub وتدمج الجديد منها في Room تلقائياً.
-     */
-    /**
      * تجلب أحدث قائمة حزم من GitHub وتقوم بالمزامنة الكاملة:
      * - إضافة الحزم الجديدة
      * - تحديث الأسماء والفئات المعدلة
      * - حذف الحزم التي أُزيلت من السيرفر
      */
     suspend fun syncWithRemote(): Result<Int> = withContext(Dispatchers.IO) {
+        var connection: java.net.HttpURLConnection? = null
         try {
             // كاسر الكاش لضمان وصول التعديل فوراً
             val remoteUrl = "https://raw.githubusercontent.com/AnasAbdullh/Debloat-HyperOS/main/app/src/main/assets/debloat_presets.json?nocache=${System.currentTimeMillis()}"
-            val connection = (java.net.URL(remoteUrl).openConnection() as java.net.HttpURLConnection).apply {
+            connection = (java.net.URL(remoteUrl).openConnection() as java.net.HttpURLConnection).apply {
                 connectTimeout = 5000
                 readTimeout = 5000
                 requestMethod = "GET"
@@ -203,14 +205,12 @@ class DebloatRepository(
                     val existing = currentLocalMap[pkg]
 
                     if (existing != null) {
-                        // إذا تم تعديل الاسم أو التصنيف أونلاين
                         if (existing.name != newName || existing.category != newCat) {
                             toInsertOrUpdate.add(
                                 existing.copy(name = newName, category = newCat)
                             )
                         }
                     } else {
-                        // حزمة جديدة كلياً
                         toInsertOrUpdate.add(
                             DebloatAppEntity(
                                 packageName = pkg,
@@ -225,14 +225,13 @@ class DebloatRepository(
                     }
                 }
 
-                // 2. فحص الحذف (أي حزمة كانت موجودة محلياً ولم تعد في السيرفر)
+                // 2. فحص الحذف
                 currentLocalApps.forEach { localApp ->
                     if (!remoteAppsMap.containsKey(localApp.packageName)) {
                         toDelete.add(localApp)
                     }
                 }
 
-                // تطبيق التغييرات على قاعدة البيانات Room
                 if (toDelete.isNotEmpty()) {
                     dao.deleteAll(toDelete)
                 }
@@ -249,6 +248,8 @@ class DebloatRepository(
             }
         } catch (e: Exception) {
             Result.failure(e)
+        } finally {
+            connection?.disconnect() // ضمان إغلاق الاتصال وتحرير الموارد دائماً
         }
     }
 }
