@@ -1,1 +1,6 @@
-﻿{"latest_version_code": 2, "latest_version_name": "1.1.0", "download_url": "https://github.com/AnasAbdullh/Debloat-HyperOS/releases/latest", "changelog": "Initial Release: Full debloat support for HyperOS via Shizuku."}
+{
+  "latest_version_code": 2,
+  "latest_version_name": "1.1.0",
+  "download_url": "https://github.com/AnasAbdullh/Debloat-HyperOS-App/releases/latest",
+  "changelog": "تم حل مشكلة التوافق مع HyperOS 2.0 وإضافة ميزات جديدة لتحسين الأداء وتحديث قائمة التطبيقات القابلة للإزالة."
+}
