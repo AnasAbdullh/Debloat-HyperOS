@@ -38,7 +38,7 @@
         { "name": "Facebook Services", "packageName": "com.facebook.services" },
         { "name": "Facebook App Manager", "packageName": "com.facebook.appmanager" },
         { "name": "Facebook System", "packageName": "com.facebook.system" },
-        { "name": "Analytic (Tracking)", "packageName": "com.miui.analytics" },
+        { "name": "Analytics (Tracking)", "packageName": "com.miui.analytics" },
         { "name": "Wallpaper Carousel", "packageName": "com.miui.android.fashiongallery" },
         { "name": "ShareMe / Mi Drop", "packageName": "com.xiaomi.midrop" }
       ]
@@ -73,6 +73,24 @@
         { "name": "Mi Pay (IN)", "packageName": "com.mipay.wallet.in" },
         { "name": "Mi Coin", "packageName": "com.xiaomi.payment" },
         { "name": "Quick Apps", "packageName": "com.miui.hybrid" }
+      ]
+    },
+    {
+      "category": "Google",
+      "apps": [
+        { "name": "Google Chrome", "packageName": "com.android.chrome" },
+        { "name": "Google Search", "packageName": "com.google.android.googlequicksearchbox" },
+        { "name": "Google Photos", "packageName": "com.google.android.apps.photos" },
+        { "name": "YouTube", "packageName": "com.google.android.youtube" },
+        { "name": "Google One", "packageName": "com.google.android.apps.subscriptions.red" },
+        { "name": "Digital Wellbeing", "packageName": "com.google.android.apps.wellbeing" },
+        { "name": "Android Feedback", "packageName": "com.google.android.feedback" },
+        { "name": "Talkback", "packageName": "com.google.android.marvin.talkback" },
+        { "name": "Google Podcasts", "packageName": "com.google.android.apps.podcasts" },
+        { "name": "Google Duo", "packageName": "com.google.android.apps.tachyon" },
+        { "name": "Hangouts", "packageName": "com.google.android.talk" },
+        { "name": "Play Movies & TV", "packageName": "com.google.android.videos" },
+        { "name": "Play Music", "packageName": "com.google.android.music" }
       ]
     }
   ]
