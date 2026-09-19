@@ -1,6 +1,9 @@
 package com.debloat.hyperos.data
 
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -18,43 +21,65 @@ data class AppUpdateInfo(
 
 object UpdateChecker {
 
-    private const val UPDATE_URL = "https://raw.githubusercontent.com/AnasAbdullh/Debloat-HyperOS/main/version.json"
+    private const val TAG = "UpdateChecker"
+    private const val BASE_UPDATE_URL = "https://raw.githubusercontent.com/AnasAbdullh/Debloat-HyperOS/main/version.json"
 
     suspend fun checkForUpdates(context: Context): Pair<Boolean, AppUpdateInfo?> = withContext(Dispatchers.IO) {
+        var connection: HttpURLConnection? = null
         try {
-            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            val currentVersionCode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            // جلب رقم الإصدار الحالي بأمان حسب إصدار الأندرويد
+            val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageInfo(context.packageName, PackageManager.PackageInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getPackageInfo(context.packageName, 0)
+            }
+
+            val currentVersionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 packageInfo.longVersionCode.toInt()
             } else {
                 @Suppress("DEPRECATION")
                 packageInfo.versionCode
             }
 
-            val url = URL(UPDATE_URL)
-            val connection = (url.openConnection() as HttpURLConnection).apply {
-                connectTimeout = 4000
-                readTimeout = 4000
+            // منع التخزين المؤقت
+            val url = URL("$BASE_UPDATE_URL?nocache=${System.currentTimeMillis()}")
+            connection = (url.openConnection() as HttpURLConnection).apply {
+                connectTimeout = 7000
+                readTimeout = 7000
                 requestMethod = "GET"
+                useCaches = false
+                setRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate")
+                setRequestProperty("Pragma", "no-cache")
             }
 
-            if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                val reader = BufferedReader(InputStreamReader(connection.inputStream))
-                val jsonString = reader.readText()
-                reader.close()
+            val responseCode = connection.responseCode
+            Log.d(TAG, "Update check response code: $responseCode")
 
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                val jsonString = connection.inputStream.bufferedReader().use { it.readText() }
                 val json = JSONObject(jsonString)
-                val latestCode = json.getInt("latestVersionCode")
+
+                val latestCode = if (json.has("latestVersionCode")) json.getInt("latestVersionCode") else json.optInt("latest_version_code", currentVersionCode)
+                val latestName = if (json.has("latestVersionName")) json.getString("latestVersionName") else json.optString("latest_version_name", "1.0.0")
+                val notes = if (json.has("releaseNotes")) json.getString("releaseNotes") else json.optString("changelog", "تحسينات عامة وإصلاحات للأخطاء.")
+                val download = if (json.has("downloadUrl")) json.getString("downloadUrl") else json.optString("download_url", "https://github.com/AnasAbdullh/Debloat-HyperOS/releases")
+
                 val updateInfo = AppUpdateInfo(
                     latestVersionCode = latestCode,
-                    latestVersionName = json.getString("latestVersionName"),
-                    releaseNotes = json.getString("releaseNotes"),
-                    downloadUrl = json.getString("downloadUrl")
+                    latestVersionName = latestName,
+                    releaseNotes = notes,
+                    downloadUrl = download
                 )
 
                 return@withContext (latestCode > currentVersionCode) to updateInfo
+            } else {
+                Log.w(TAG, "Failed to fetch version.json, HTTP response: $responseCode")
             }
-        } catch (_: Exception) {
-            // تجاهل أخطاء الاتصال
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking for updates", e)
+        } finally {
+            connection?.disconnect()
         }
         false to null
     }

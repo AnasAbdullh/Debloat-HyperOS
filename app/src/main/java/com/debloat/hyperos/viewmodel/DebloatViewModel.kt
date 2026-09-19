@@ -107,13 +107,18 @@ class DebloatViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // 1. مزامنة القائمة من GitHub في الخلفية لإضافة أي حزم جديدة
-                repository.syncWithRemote()
+                // 1. مزامنة القائمة من GitHub في الخلفية
+                val syncResult = repository.syncWithRemote()
+                syncResult.onSuccess { count ->
+                    android.util.Log.d("RemoteSync", "Sync successful, updated/inserted: $count")
+                }.onFailure { error ->
+                    android.util.Log.e("RemoteSync", "Sync failed: ${error.message}", error)
+                }
 
                 // 2. تحديث حالة التثبيت الفعلية لجميع الحزم من الجهاز
                 repository.refreshInstallStates()
-            } catch (_: Exception) {
-                // تجاوز أخطاء الشبكة لضمان استمرار عمل التطبيق أوفلاين
+            } catch (e: Exception) {
+                android.util.Log.e("RemoteSync", "Unexpected error: ${e.message}", e)
             } finally {
                 _isLoading.value = false
             }

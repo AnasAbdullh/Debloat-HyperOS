@@ -159,45 +159,91 @@ class DebloatRepository(
     /**
      * تجلب أحدث قائمة حزم من GitHub وتدمج الجديد منها في Room تلقائياً.
      */
+    /**
+     * تجلب أحدث قائمة حزم من GitHub وتقوم بالمزامنة الكاملة:
+     * - إضافة الحزم الجديدة
+     * - تحديث الأسماء والفئات المعدلة
+     * - حذف الحزم التي أُزيلت من السيرفر
+     */
     suspend fun syncWithRemote(): Result<Int> = withContext(Dispatchers.IO) {
         try {
-            // استبدل الرابط برابط مستودعك عند رفعه
-            val remoteUrl = "https://raw.githubusercontent.com/AnasAbdullh/Debloat-HyperOS/main/app/src/main/assets/debloat_presets.json"
-            val connection = java.net.URL(remoteUrl).openConnection() as java.net.HttpURLConnection
-            connection.connectTimeout = 4000
-            connection.readTimeout = 4000
+            // كاسر الكاش لضمان وصول التعديل فوراً
+            val remoteUrl = "https://raw.githubusercontent.com/AnasAbdullh/Debloat-HyperOS/main/app/src/main/assets/debloat_presets.json?nocache=${System.currentTimeMillis()}"
+            val connection = (java.net.URL(remoteUrl).openConnection() as java.net.HttpURLConnection).apply {
+                connectTimeout = 5000
+                readTimeout = 5000
+                requestMethod = "GET"
+                useCaches = false
+                defaultUseCaches = false
+                setRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate")
+                setRequestProperty("Pragma", "no-cache")
+            }
 
             if (connection.responseCode == java.net.HttpURLConnection.HTTP_OK) {
                 val rawJson = connection.inputStream.bufferedReader().use { it.readText() }
                 val remotePresets = json.decodeFromString<PresetRoot>(rawJson)
 
-                val existingPackageNames = dao.getAllOnce().map { it.packageName }.toSet()
-                val newEntities = mutableListOf<DebloatAppEntity>()
-
+                // تحويل القادمة من السيرفر إلى خريطة Map ليسهل التعامل معها
+                val remoteAppsMap = mutableMapOf<String, Pair<String, String>>() // packageName -> Pair(name, category)
                 remotePresets.categories.forEach { cat ->
                     cat.apps.forEach { app ->
-                        if (!existingPackageNames.contains(app.packageName)) {
-                            newEntities.add(
-                                DebloatAppEntity(
-                                    packageName = app.packageName,
-                                    name = app.name,
-                                    category = cat.category,
-                                    isInstalled = true,
-                                    isRemovedByApp = false,
-                                    isSelected = false,
-                                    isSystemApp = isSystemAppPackage(app.packageName)
-                                )
-                            )
-                        }
+                        remoteAppsMap[app.packageName] = Pair(app.name, cat.category)
                     }
                 }
 
-                if (newEntities.isNotEmpty()) {
-                    dao.insertAll(newEntities)
-                    refreshInstallStates()
+                val currentLocalApps = dao.getAllOnce()
+                val currentLocalMap = currentLocalApps.associateBy { it.packageName }
+
+                val toInsertOrUpdate = mutableListOf<DebloatAppEntity>()
+                val toDelete = mutableListOf<DebloatAppEntity>()
+
+                // 1. فحص الإضافة والتحديث
+                remoteAppsMap.forEach { (pkg, pair) ->
+                    val (newName, newCat) = pair
+                    val existing = currentLocalMap[pkg]
+
+                    if (existing != null) {
+                        // إذا تم تعديل الاسم أو التصنيف أونلاين
+                        if (existing.name != newName || existing.category != newCat) {
+                            toInsertOrUpdate.add(
+                                existing.copy(name = newName, category = newCat)
+                            )
+                        }
+                    } else {
+                        // حزمة جديدة كلياً
+                        toInsertOrUpdate.add(
+                            DebloatAppEntity(
+                                packageName = pkg,
+                                name = newName,
+                                category = newCat,
+                                isInstalled = true,
+                                isRemovedByApp = false,
+                                isSelected = false,
+                                isSystemApp = isSystemAppPackage(pkg)
+                            )
+                        )
+                    }
                 }
 
-                Result.success(newEntities.size)
+                // 2. فحص الحذف (أي حزمة كانت موجودة محلياً ولم تعد في السيرفر)
+                currentLocalApps.forEach { localApp ->
+                    if (!remoteAppsMap.containsKey(localApp.packageName)) {
+                        toDelete.add(localApp)
+                    }
+                }
+
+                // تطبيق التغييرات على قاعدة البيانات Room
+                if (toDelete.isNotEmpty()) {
+                    dao.deleteAll(toDelete)
+                }
+                if (toInsertOrUpdate.isNotEmpty()) {
+                    dao.insertAll(toInsertOrUpdate)
+                }
+
+                refreshInstallStates()
+
+                val totalChanges = toInsertOrUpdate.size + toDelete.size
+                Result.success(totalChanges)
             } else {
                 Result.failure(Exception("HTTP error ${connection.responseCode}"))
             }

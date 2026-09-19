@@ -1,6 +1,9 @@
 package com.debloat.hyperos.ui.components
 
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -14,7 +17,9 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
@@ -51,8 +56,6 @@ import com.debloat.hyperos.data.UpdateChecker
 import com.debloat.hyperos.ui.theme.AccentOrange
 import com.debloat.hyperos.ui.theme.ThemeOption
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,6 +72,17 @@ fun SettingsBottomSheet(
 
     var isCheckingUpdates by remember { mutableStateOf(false) }
     var updateInfoDialog by remember { mutableStateOf<AppUpdateInfo?>(null) }
+
+     fun isNetworkAvailable(ctx: Context): Boolean {
+        return try {
+            val connectivityManager = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+            val activeNetwork = connectivityManager?.activeNetwork ?: return false
+            val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        } catch (e: Exception) {
+            false
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -149,7 +163,7 @@ fun SettingsBottomSheet(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "Developed with Shizuku • Open Source",
+                text = "Developed by Anas Abdullah",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -181,19 +195,36 @@ fun SettingsBottomSheet(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
+
+                // زر فحص التحديثات
                 // زر فحص التحديثات
                 Button(
                     onClick = {
-                        scope.launch {
-                            isCheckingUpdates = true
-                            val (hasUpdate, info) = UpdateChecker.checkForUpdates(context)
-                            isCheckingUpdates = false
-
-                            if (hasUpdate && info != null) {
-                                updateInfoDialog = info
-                            } else {
-                                Toast.makeText(context, "You are using the latest version!", Toast.LENGTH_SHORT).show()
+                        try {
+                            if (!isNetworkAvailable(context)) {
+                                Toast.makeText(context, "No internet connection. Please connect and try again", Toast.LENGTH_SHORT).show()
+                                return@Button
                             }
+
+                            scope.launch {
+                                isCheckingUpdates = true
+                                try {
+                                    val (hasUpdate, info) = UpdateChecker.checkForUpdates(context)
+                                    if (hasUpdate && info != null) {
+                                        updateInfoDialog = info
+                                    } else {
+                                        Toast.makeText(context, "You are using the latest version!", Toast.LENGTH_SHORT).show()
+                                    }
+                                } catch (e: Exception) {
+                                    android.util.Log.e("UpdateChecker", "Error checking update", e)
+                                    Toast.makeText(context, "Failed to check update: ${e.message}", Toast.LENGTH_SHORT).show()
+                                } finally {
+                                    isCheckingUpdates = false
+                                }
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("UpdateChecker", "Network check error", e)
+                            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                         }
                     },
                     modifier = Modifier.weight(1f),
@@ -221,7 +252,6 @@ fun SettingsBottomSheet(
                     }
                 }
             }
-
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
@@ -256,8 +286,14 @@ fun SettingsBottomSheet(
             confirmButton = {
                 Button(
                     onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateInfo.downloadUrl))
-                        context.startActivity(intent)
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateInfo.downloadUrl)).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                         updateInfoDialog = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = AccentOrange)

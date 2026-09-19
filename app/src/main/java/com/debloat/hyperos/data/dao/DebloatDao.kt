@@ -1,6 +1,7 @@
 package com.debloat.hyperos.data.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -31,10 +32,15 @@ interface DebloatDao {
     @Query("SELECT COUNT(*) FROM debloat_apps")
     suspend fun count(): Int
 
-    // ---- Seeding ----
+    // ---- Seeding & Upsert ----
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(apps: List<DebloatAppEntity>)
+
+    // ---- Deletion ----
+
+    @Delete
+    suspend fun deleteAll(apps: List<DebloatAppEntity>)
 
     // ---- Selection ----
 
@@ -51,7 +57,7 @@ interface DebloatDao {
 
     @Query(
         "UPDATE debloat_apps SET isInstalled = :isInstalled, isRemovedByApp = :isRemovedByApp, " +
-            "isSelected = 0 WHERE packageName = :packageName"
+                "isSelected = 0 WHERE packageName = :packageName"
     )
     suspend fun updateInstallState(packageName: String, isInstalled: Boolean, isRemovedByApp: Boolean)
 
