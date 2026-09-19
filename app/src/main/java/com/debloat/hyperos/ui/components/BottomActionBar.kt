@@ -29,6 +29,8 @@ import com.debloat.hyperos.viewmodel.FilterTab
 fun BottomActionBar(
     filterTab: FilterTab,
     selectedCount: Int,
+    installedSelectedCount: Int = 0,
+    removedSelectedCount: Int = 0,
     batchInProgress: Boolean,
     batchLabel: String,
     batchCompleted: Int,
@@ -36,7 +38,11 @@ fun BottomActionBar(
     onActionClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val baseAction = if (filterTab == FilterTab.REMOVED) {
+    // تحديد ما إذا كان الإجراء هو استرجاع
+    val isRestoreAction = filterTab == FilterTab.REMOVED ||
+            (filterTab == FilterTab.ALL && removedSelectedCount > 0 && installedSelectedCount == 0)
+
+    val baseAction = if (isRestoreAction) {
         stringResource(R.string.action_restore)
     } else {
         stringResource(R.string.action_uninstall)
@@ -44,6 +50,9 @@ fun BottomActionBar(
 
     val buttonText = if (selectedCount > 0) "$baseAction ($selectedCount)" else baseAction
     val enabled = selectedCount > 0 && !batchInProgress
+
+    // تغيير لون الزر: أخضر هادئ للاسترجاع وبرتقالي للحذف
+    val actionColor = if (isRestoreAction) Color(0xFF2E7D32) else AccentOrange
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -65,7 +74,7 @@ fun BottomActionBar(
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
                         strokeWidth = 2.dp,
-                        color = AccentOrange
+                        color = actionColor
                     )
                     Text(
                         text = "  $batchLabel ($batchCompleted/$batchTotal)",
@@ -84,8 +93,8 @@ fun BottomActionBar(
                     .height(48.dp),
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = AccentOrange,
-                    contentColor = Color.Black,
+                    containerColor = actionColor,
+                    contentColor = Color.White,
                     disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
                     disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )

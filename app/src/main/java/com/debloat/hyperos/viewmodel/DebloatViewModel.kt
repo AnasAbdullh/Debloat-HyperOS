@@ -1,6 +1,5 @@
 package com.debloat.hyperos.viewmodel
 
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.debloat.hyperos.data.entity.DebloatAppEntity
@@ -28,6 +27,8 @@ data class DebloatUiState(
     val groups: List<CategoryGroup> = emptyList(),
     val filterTab: FilterTab = FilterTab.INSTALLED,
     val selectedCount: Int = 0,
+    val installedSelectedCount: Int = 0,
+    val removedSelectedCount: Int = 0,
     val shizukuConnected: Boolean = false,
     val shizukuPermissionGranted: Boolean = false,
     val batchInProgress: Boolean = false,
@@ -78,11 +79,17 @@ class DebloatViewModel(
         }.filter { it.apps.isNotEmpty() || tab == FilterTab.ALL }
             .sortedBy { it.category }
 
+        val selectedApps = apps.filter { it.isSelected }
+        val installedSelected = selectedApps.count { it.isInstalled }
+        val removedSelected = selectedApps.count { !it.isInstalled }
+
         DebloatUiState(
             isLoading = loading,
             groups = groups,
             filterTab = tab,
-            selectedCount = apps.count { it.isSelected },
+            selectedCount = selectedApps.size,
+            installedSelectedCount = installedSelected,
+            removedSelectedCount = removedSelected,
             shizukuConnected = shizukuState !is ShizukuManager.ConnectionState.Disconnected,
             shizukuPermissionGranted = shizukuState is ShizukuManager.ConnectionState.PermissionGranted,
             batchInProgress = batch.inProgress,
@@ -96,6 +103,7 @@ class DebloatViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = DebloatUiState()
     )
+
     init {
         viewModelScope.launch {
             repository.seedIfNeeded()
@@ -107,7 +115,6 @@ class DebloatViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // 1. مزامنة القائمة من GitHub في الخلفية
                 val syncResult = repository.syncWithRemote()
                 syncResult.onSuccess { count ->
                     android.util.Log.d("RemoteSync", "Sync successful, updated/inserted: $count")
@@ -115,7 +122,6 @@ class DebloatViewModel(
                     android.util.Log.e("RemoteSync", "Sync failed: ${error.message}", error)
                 }
 
-                // 2. تحديث حالة التثبيت الفعلية لجميع الحزم من الجهاز
                 repository.refreshInstallStates()
             } catch (e: Exception) {
                 android.util.Log.e("RemoteSync", "Unexpected error: ${e.message}", e)
@@ -126,14 +132,11 @@ class DebloatViewModel(
     }
 
     fun selectAllInstalled(select: Boolean) {
-        val currentTabApps = uiState.value.groups
-            .flatMap { it.apps }
+        val currentTabApps = uiState.value.groups.flatMap { it.apps }
         currentTabApps.forEach { app ->
             toggleAppSelection(app.packageName, select)
         }
     }
-
-
 
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
@@ -165,13 +168,20 @@ class DebloatViewModel(
         }
     }
 
-    /** Runs uninstall on all selected+installed apps, or restore on all selected+removed apps, per active tab. */
+    /** Runs uninstall on selected installed apps, or restore on selected removed apps */
     fun runBatchAction() {
-        // 1. التحقق أولاً من Shizuku قبل أي عملية
-        if (! uiState.value.shizukuPermissionGranted || !uiState.value.shizukuConnected) {
+        if (!uiState.value.shizukuPermissionGranted || !uiState.value.shizukuConnected) {
             _lastResultMessage.value = "Action failed: Shizuku permission required. Tap 'Grant access' above."
             return
         }
+
+        val state = uiState.value
+        // تحديد نوع العملية بذكاء:
+        // 1. إذا كان في تبويب REMOVED -> دائماً Restore
+        // 2. إذا كان في تبويب ALL وكل العناصر المحددة محذوفة -> Restore
+        // 3. عدا ذلك -> Uninstall
+        val isRestoring = state.filterTab == FilterTab.REMOVED ||
+                (state.filterTab == FilterTab.ALL && state.removedSelectedCount > 0 && state.installedSelectedCount == 0)
 
         viewModelScope.launch {
             _batchState.value = BatchUiState(inProgress = true, total = 0, completed = 0)
@@ -184,7 +194,6 @@ class DebloatViewModel(
                 )
             }
 
-            val isRestoring = _filterTab.value == FilterTab.REMOVED
             val finished = if (isRestoring) {
                 repository.restoreSelected(onProgress)
             } else {
@@ -196,7 +205,6 @@ class DebloatViewModel(
             val succeeded = finished.successCount
             val failed = finished.failureCount
 
-            // 2. رسائل الفشل والنجاح الحقيقية بعد التأكد من شيزوكو
             _lastResultMessage.value = when {
                 failed == 0 -> "$succeeded succeeded"
                 succeeded == 0 -> {

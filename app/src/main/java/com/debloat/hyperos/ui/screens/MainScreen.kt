@@ -198,6 +198,8 @@ fun MainScreen(
             BottomActionBar(
                 filterTab = uiState.filterTab,
                 selectedCount = uiState.selectedCount,
+                installedSelectedCount = uiState.installedSelectedCount, // أضف هذا السطر
+                removedSelectedCount = uiState.removedSelectedCount,     // وأضف هذا السطر
                 batchInProgress = uiState.batchInProgress,
                 batchLabel = uiState.batchProgressLabel,
                 batchCompleted = uiState.batchProgressCompleted,
