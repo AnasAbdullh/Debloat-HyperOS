@@ -40,7 +40,11 @@
         { "name": "Facebook System", "packageName": "com.facebook.system" },
         { "name": "Analytics (Tracking)", "packageName": "com.miui.analytics" },
         { "name": "Wallpaper Carousel", "packageName": "com.miui.android.fashiongallery" },
-        { "name": "ShareMe / Mi Drop", "packageName": "com.xiaomi.midrop" }
+        { "name": "ShareMe / Mi Drop", "packageName": "com.xiaomi.midrop" },
+        { "name": "SOTER Fingerprint Payment (WeChat/QQ)", "packageName": "com.tencent.soter.soterserver" },
+        { "name": "Link to Windows", "packageName": "com.microsoft.appmanager" },
+        { "name": "Device Integration Service", "packageName": "com.microsoft.deviceintegrationservice" },
+        { "name": "Cross Device Broker", "packageName": "com.microsoftsdk.crossdeviceservicebroker" }
       ]
     },
     {
@@ -57,7 +61,10 @@
         { "name": "Mi Home", "packageName": "com.xiaomi.smarthome" },
         { "name": "Sogou Keyboard", "packageName": "com.sohu.inputmethod.sogou.xiaomi" },
         { "name": "Notes", "packageName": "com.miui.notes" },
-        { "name": "iFlytek IME", "packageName": "com.iflytek.inputmethod.miui" }
+        { "name": "iFlytek IME", "packageName": "com.iflytek.inputmethod.miui" },
+        { "name": "SIM Activation Service", "packageName": "com.xiaomi.simactivate.service" },
+        { "name": "MiLink Service", "packageName": "com.milink.service" },
+        { "name": "Barrage Comments (Danmaku)", "packageName": "com.xiaomi.barrage" }
       ]
     },
     {
@@ -73,7 +80,14 @@
         { "name": "Mi Pay (ID)", "packageName": "com.mipay.wallet.id" },
         { "name": "Mi Pay (IN)", "packageName": "com.mipay.wallet.in" },
         { "name": "Mi Coin", "packageName": "com.xiaomi.payment" },
-        { "name": "Quick Apps", "packageName": "com.miui.hybrid" }
+        { "name": "Quick Apps", "packageName": "com.miui.hybrid" },
+        { "name": "Mi Browser (Global)", "packageName": "com.mi.globalbrowser" },
+        { "name": "Mi Cleaner (Global)", "packageName": "com.miui.cleaner" },
+        { "name": "Mi Cloud Service", "packageName": "com.miui.cloudservice" },
+        { "name": "Mi Cloud Backup", "packageName": "com.miui.cloudbackup" },
+        { "name": "Mi Cloud Sync", "packageName": "com.miui.micloudsync" },
+        { "name": "App Finder", "packageName": "com.mi.appfinder" },
+        { "name": "Partner Bookmarks", "packageName": "com.android.providers.partnerbookmarks" }
       ]
     },
     {
@@ -83,6 +97,7 @@
         { "name": "Google Search", "packageName": "com.google.android.googlequicksearchbox" },
         { "name": "Google Photos", "packageName": "com.google.android.apps.photos" },
         { "name": "YouTube", "packageName": "com.google.android.youtube" },
+        { "name": "YouTube Music", "packageName": "com.google.android.apps.youtube.music" },
         { "name": "Google One", "packageName": "com.google.android.apps.subscriptions.red" },
         { "name": "Digital Wellbeing", "packageName": "com.google.android.apps.wellbeing" },
         { "name": "Android Feedback", "packageName": "com.google.android.feedback" },
@@ -91,7 +106,12 @@
         { "name": "Google Duo", "packageName": "com.google.android.apps.tachyon" },
         { "name": "Hangouts", "packageName": "com.google.android.talk" },
         { "name": "Play Movies & TV", "packageName": "com.google.android.videos" },
-        { "name": "Play Music", "packageName": "com.google.android.music" }
+        { "name": "Play Music", "packageName": "com.google.android.music" },
+        { "name": "Google Maps", "packageName": "com.google.android.apps.maps" },
+        { "name": "Gmail", "packageName": "com.google.android.gm" },
+        { "name": "Android Auto", "packageName": "com.google.android.projection.gearhead" },
+        { "name": "Health Connect", "packageName": "com.google.android.healthconnect.controller" },
+        { "name": "Print Service Recommendation", "packageName": "com.google.android.printservice.recommendation" }
       ]
     }
   ]
