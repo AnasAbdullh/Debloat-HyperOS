@@ -48,6 +48,7 @@
       "apps": [
         { "name": "Mi Credit", "packageName": "com.micredit.in" },
         { "name": "Mi Health", "packageName": "com.mi.health" },
+        { "name": "Mi Fitness (Health Global)", "packageName": "com.mi.healthglobal" },
         { "name": "Downloads (Ads)", "packageName": "com.android.providers.downloads.ui" },
         { "name": "Mi AI", "packageName": "com.miui.voiceassist" },
         { "name": "Mi Live Assistant", "packageName": "com.mi.liveassistant" },
