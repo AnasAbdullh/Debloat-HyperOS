@@ -9,11 +9,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/AnasAbdullh/Debloat-HyperOS/releases/latest">
-    <img src="https://img.shields.io/github/v/release/AnasAbdullh/Debloat-HyperOS?color=FF7A00&label=Release&style=for-the-badge" alt="Latest Release" />
+  <a href="https://github.com/AnasAbdullh/Debloat-HyperOS-App/releases/latest">
+    <img src="https://img.shields.io/github/v/release/AnasAbdullh/Debloat-HyperOS-App?color=FF7A00&label=Release&style=for-the-badge" alt="Latest Release" />
   </a>
-  <a href="https://github.com/AnasAbdullh/Debloat-HyperOS/stargazers">
-    <img src="https://img.shields.io/github/stars/AnasAbdullh/Debloat-HyperOS?style=for-the-badge&color=blue" alt="Stars" />
+  <a href="https://github.com/AnasAbdullh/Debloat-HyperOS-App/releases">
+    <img src="https://img.shields.io/github/downloads/AnasAbdullh/Debloat-HyperOS-App/total?color=FF7A00&label=Downloads&style=for-the-badge" alt="Total Downloads" />
+  </a>
+  <a href="https://github.com/AnasAbdullh/Debloat-HyperOS-App/stargazers">
+    <img src="https://img.shields.io/github/stars/AnasAbdullh/Debloat-HyperOS-App?style=for-the-badge&color=blue" alt="Stars" />
   </a>
   <img src="https://img.shields.io/badge/Platform-Android%208.0%2B-brightgreen?style=for-the-badge" alt="Android 8.0+" />
   <img src="https://img.shields.io/badge/Root-Not%20Required-FF7A00?style=for-the-badge" alt="No Root Required" />
