@@ -1,4 +1,4 @@
-# ⚡ Debloat HyperOS
+# ⚡ Debloat HyperOS App
 
 <p align="center">
   <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp" width="90" alt="Debloat HyperOS Logo" />
