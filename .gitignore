@@ -12,3 +12,5 @@ keystore.properties
 *.jks
 *.keystore
 /app/release/
+.kotlin/
+.gradle/
